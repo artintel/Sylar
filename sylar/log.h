@@ -3,6 +3,8 @@
 #include <string>
 #include <stdint.h>
 #include <list>
+#include <stringstreams>
+#include <fstream>
 
 namespace sylar{
 //日志事件
@@ -25,11 +27,11 @@ private:
 class LogLevel{
 public:
     enum Level{
-        DEBUG = 1,
-        INFO = 2,
-        WARN = 3,
-        EOORO = 4,
-        FATAL = 5
+       DEBUG = 1,
+       INFO = 2,
+       WARN = 3,
+       EOORO = 4,
+       FATAL = 5
     };
 
 };
@@ -50,9 +52,13 @@ public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender(){}
 
-    void log(LogLevel::Level level, LOgEvent::ptr event);
-private:
+    virtual void log(LogLevel::Level level, LOgEvent::ptr event) = 0;//定义纯虚基类，在字类中进行实现
+
+    void setFormatter(LogFormatter::ptr val){ m_formatter = val; }
+    LogFromatter::ptr getFormatter() const { return m_formatter; }
+protected://这样，字类就可以使用到
     LogLevel::Level m_level;
+    LogFormatter::ptr m_formatter;
 };
 
 //日志器
@@ -80,13 +86,24 @@ private:
 
 //输出到控制台的Appender
 class StdoutLogAppender : public LogAppender{
-    
+public:
+    typedef std::shared_ptr<StdoutLogAppender> ptr;
+    void log(LogLevel::Level level, LogEvent::ptr event) override;
+private:
 };
 
 
 //定义输出到文件的Appender
 class FileLogAppender : public LogAppender{
-
+public:
+    typedef std::shared_ptr<FileLogAppender> ptr;
+    FIleLogAppender(const std::string& filename);   //需要文件名
+    void Log(LogLevel::Level level, LogEvent::ptr event) override;  //override 重写关键字，可以避免派生类中忘记重写续汉书的错误
+    //重新打开文件，文件打开成功返回true
+    bool reopen();
+private:
+    std::string m_ame;
+    std::ofstream m_filestream;
 };
 
 
