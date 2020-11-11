@@ -5,6 +5,7 @@
 #include <list>
 #include <stringstreams>
 #include <fstream>
+#include <vector>
 
 namespace sylar{
 //日志事件
@@ -12,13 +13,21 @@ class LogEvent{
 public:
     typedef std::shared_ptr<LogEvent> ptr;
     LogEvent();
+
+    const char* getFIle() const { return m_file; }
+    int32_t getLine() const { return m_line; }
+    uint32_t getElapse() const { return m_elapse; }
+    uint32_t getThreadId() const { return m_threadId; }
+    uint32_t getFiberId() const { return m_fiberId; }
+    uint64_t getTime() const { return m_time; }
+    const std::string& getCOntent() const { return m_content; }
 private:
     const char* m_file = nullptr;   //文件名
     int32_t m_line = 0;             //行号
     uint32_t m_elapse = 0;          //程序启动到开始到现在的毫秒数
     uint32_t m_threadId = 0;        //线程ID
     uint32_t m_fiberId = 0;         //协程ID
-    uint64_t m_time = 0;                //时间戳
+    uint64_t m_time = 0;            //时间戳
     std::string m_content;
 
 };
@@ -27,12 +36,15 @@ private:
 class LogLevel{
 public:
     enum Level{
+       UKNOWN = 0;
        DEBUG = 1,
        INFO = 2,
        WARN = 3,
        EOORO = 4,
        FATAL = 5
     };
+
+    static const char* ToString(LogLevel::Level level);
 
 };
 
@@ -41,8 +53,23 @@ public:
 class LogFormatter{
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
-    std::string format(LogEvent::ptr event);
+    LogFormatter(const std::string& pattern);
+    
+    //%t    %thread_id %m%n -->  时间   线程号 消息 换行    这是定义的一种固定化格式
+    std::string format(LogLevel::Level level, LogEvent::ptr event);
+public:
+    //定义一个子模块
+    class FormateItem{
+    public:
+        typedef std::shared_ptr<FormatItem> ptr;
+        virtual ~FormateItem(){}
+        virtual void std::string format(std::ostream& os, LogLevel::Level level, LogEvent::ptr event) = 0;
+    };
+
+   void init(); 
 private:
+    std::string m_pattern;
+    std::vector<FormateItem::ptr> m_items;
 };
 
 
