@@ -4,8 +4,11 @@
 #include <stdint.h>
 #include <list>
 #include <stringstreams>
+#include <sstream>
 #include <fstream>
 #include <vector>
+
+class Logger;
 
 namespace sylar{
 //日志事件
@@ -56,14 +59,15 @@ public:
     LogFormatter(const std::string& pattern);
     
     //%t    %thread_id %m%n -->  时间   线程号 消息 换行    这是定义的一种固定化格式
-    std::string format(LogLevel::Level level, LogEvent::ptr event);
+    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
 public:
     //定义一个子模块
     class FormateItem{
     public:
+        FOrmatItem(const std::string& fmt = "")
         typedef std::shared_ptr<FormatItem> ptr;
         virtual ~FormateItem(){}
-        virtual void std::string format(std::ostream& os, LogLevel::Level level, LogEvent::ptr event) = 0;
+        virtual void std::string format(std::ostream& os, std::shared_ptr<Logger> logger,  LogLevel::Level level, LogEvent::ptr event) = 0;
     };
 
    void init(); 
@@ -79,7 +83,7 @@ public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender(){}
 
-    virtual void log(LogLevel::Level level, LOgEvent::ptr event) = 0;//定义纯虚基类，在字类中进行实现
+    virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LOgEvent::ptr event) = 0;//定义纯虚基类，在字类中进行实现
 
     void setFormatter(LogFormatter::ptr val){ m_formatter = val; }
     LogFromatter::ptr getFormatter() const { return m_formatter; }
@@ -105,6 +109,8 @@ public:
     void delAppender(LogAppender::ptr appender);
     LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level val){ m_level = val; }
+
+    const std::string& getName() const { return m_name; }
 private:
     std::string m_name;                                //日志名称
     LogLevel::Level m_level;                           //日志级别
